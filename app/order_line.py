@@ -6,4 +6,3 @@ class OrderLine():
     order_ref: str
     product_name: str
     quantity: int
-

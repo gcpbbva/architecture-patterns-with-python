@@ -1,8 +1,9 @@
 from datetime import date, timedelta
+
 import pytest
 
 # from model import ...
-from app.batch import Batch
+from app.batch import Batch, AllocateException
 from app.order_line import OrderLine
 
 today = date.today()
@@ -24,7 +25,11 @@ def test_can_allocate_if_available_greater_than_required():
 
 
 def test_cannot_allocate_if_available_smaller_than_required():
-    pytest.fail("todo")
+    batch = Batch("batch-001", "SMALL-TABLE", qty=1, eta=date.today())
+    line = OrderLine('order-ref', "SMALL-TABLE", 2)
+
+    with pytest.raises(AllocateException):
+        batch.allocate(line)
 
 
 def test_can_allocate_if_available_equal_to_required():
