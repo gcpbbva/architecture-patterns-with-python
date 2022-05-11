@@ -5,7 +5,7 @@ from app.order_line import OrderLine
 
 
 @dataclasses.dataclass(eq=False)
-class Batch():
+class Batch:
     id: str
     product_name: str
     qty: int
