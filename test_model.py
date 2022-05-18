@@ -58,3 +58,18 @@ def test_cannot_allocate_if_skus_do_not_match():
     different_sku_line = OrderLine("order-123", "EXPENSIVE-TOASTER", 10)
 
     assert batch.can_allocate(different_sku_line) is False
+
+
+def test_can_only_deallocate_allocated_lines():
+    batch, unallocated_line = make_batch_and_line("DECORATIVE-TRINKET", 20, 2)
+    batch.deallocate(unallocated_line)
+    assert batch.available_quantity == 20
+
+
+def test_can_deallocate_when_order_reference():
+    batch, order_line = make_batch_and_line("DECORATIVE-TRINKET", 20, 2)
+    batch.allocate(order_line=order_line)
+
+    batch.deallocate(order_line=order_line)
+
+    assert batch.quantity == 20
