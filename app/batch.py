@@ -20,6 +20,11 @@ class Batch:
     def available_quantity(self):
         return self.quantity
 
+    def can_allocate(self, order_line):
+        if self.sku == order_line.sku:
+            return self.quantity >= order_line.quantity
+        return False
+
 
 class AllocateException(Exception):
     pass
