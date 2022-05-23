@@ -6,10 +6,6 @@ import pytest
 from app.batch import Batch, AllocateException
 from app.order_line import OrderLine
 
-today = date.today()
-tomorrow = today + timedelta(days=1)
-later = tomorrow + timedelta(days=10)
-
 
 def make_batch_and_line(sku, batch_qty, line_qty):
     return (
@@ -73,3 +69,10 @@ def test_can_deallocate_when_order_reference():
     batch.deallocate(order_line=order_line)
 
     assert batch.quantity == 20
+
+
+def test_allocation_is_idempotent():
+    batch, line = make_batch_and_line("ANGULAR-DESK", 20, 2)
+    batch.allocate(line)
+    batch.allocate(line)
+    assert batch.available_quantity == 18
