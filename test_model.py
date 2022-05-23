@@ -1,14 +1,10 @@
-from datetime import date, timedelta
+from datetime import date
 
 import pytest
 
 # from model import ...
 from app.batch import Batch, AllocateException
 from app.order_line import OrderLine
-
-today = date.today()
-tomorrow = today + timedelta(days=1)
-later = tomorrow + timedelta(days=10)
 
 
 def make_batch_and_line(sku, batch_qty, line_qty):
