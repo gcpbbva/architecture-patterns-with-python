@@ -31,7 +31,7 @@ class Batch:
 
     def can_allocate(self, order_line):
         if self.sku == order_line.sku:
-            return self.quantity >= order_line.quantity
+            return self.available_quantity >= order_line.quantity
         return False
 
     def deallocate(self, order_line: OrderLine):
