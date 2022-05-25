@@ -21,12 +21,12 @@ class Batch:
         return hash(self.reference)
 
     def allocate(self, order_line: OrderLine):
-        self.quantity -= order_line.quantity
+        if self.quantity < order_line.quantity:
+            raise AllocateException()
         self._order_lines.add(order_line)
 
     @property
     def available_quantity(self):
-
         return self.quantity - sum([ol.quantity for ol in self._order_lines])
 
     def can_allocate(self, order_line):
