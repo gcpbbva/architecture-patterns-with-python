@@ -1,6 +1,8 @@
+import pytest
 from app.batch import Batch
 from app.order_line import OrderLine
 from fixtures import tomorrow, today, later
+from app.model import allocate
 
 
 def test_prefers_current_stock_batches_to_shipments():
