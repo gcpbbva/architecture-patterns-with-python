@@ -64,3 +64,4 @@ def test_repository_can_retrieve_a_batch_with_allocations(session):
     assert retrieved._allocations == {
         model.OrderLine("order1", "GENERIC-SOFA", 12),
     }
+    assert retrieved.available_quantity == 100 - 12
