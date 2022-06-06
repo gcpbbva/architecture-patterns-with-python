@@ -16,15 +16,32 @@ class SqlRepository(AbstractRepository):
     def __init__(self, session):
         self.session = session
 
-    def get_order_line(self, orderid, sku):
+    def add(self, batch):
+        inserted_batch = self._insert_batch(batch)
+        for allocated_order_line in batch.allocations:
+            order_line_id = self._insert_order_line(
+                sku=allocated_order_line.sku,
+                orderid=allocated_order_line.orderid,
+                qty=allocated_order_line.qty
+            )
+            self._insert_allocation(
+                orderline_id=order_line_id,
+                batch_id=inserted_batch[0]
+            )
+
+    def get(self, reference) -> model.Batch:
+        batch, batch_id = self._get_raw_batch(reference)
+        return self._allocate_own_order_lines_to_batch(batch_id, batch)
+
+    def _get_order_line(self, orderid, sku):
         result = self.session.execute(
             "SELECT id FROM order_lines WHERE orderid=:orderid AND sku=:sku",
             dict(orderid=orderid, sku=sku),
         )
         return result.first()
 
-    def insert_order_line(self, sku, qty, orderid):
-        if not self.get_order_line(orderid, sku):
+    def _insert_order_line(self, sku, qty, orderid):
+        if not self._get_order_line(orderid, sku):
             self.session.execute(
                 """
                 INSERT INTO 'order_lines' (sku, qty, orderid)
@@ -42,7 +59,7 @@ class SqlRepository(AbstractRepository):
         )
         return orderline_id
 
-    def insert_allocation(self, orderline_id, batch_id):
+    def _insert_allocation(self, orderline_id, batch_id):
         self.session.execute(
             """
             INSERT INTO 'allocations' (orderline_id, batch_id)
@@ -54,7 +71,7 @@ class SqlRepository(AbstractRepository):
             }
         )
 
-    def get_batch(self, batch_id):
+    def _get_batch(self, batch_id):
         batches = self.session.execute(
             """
             SELECT id FROM batches 
@@ -66,8 +83,8 @@ class SqlRepository(AbstractRepository):
         )
         return batches.first()
 
-    def insert_batch(self, batch):
-        recovered_batch = self.get_batch(batch.reference)
+    def _insert_batch(self, batch):
+        recovered_batch = self._get_batch(batch.reference)
         if not recovered_batch:
             self.session.execute(
                 """
@@ -95,24 +112,9 @@ class SqlRepository(AbstractRepository):
                     'eta': batch.eta
                 }
             )
-        return self.get_batch(batch.reference)
+        return self._get_batch(batch.reference)
 
-    def add(self, batch):
-        # self.session.execute('INSERT INTO ??
-        inserted_batch = self.insert_batch(batch)
-        for allocated_order_line in batch._allocations:
-            orderline_id = self.insert_order_line(
-                sku=allocated_order_line.sku,
-                orderid=allocated_order_line.orderid,
-                qty=allocated_order_line.qty
-            )
-            self.insert_allocation(
-                orderline_id=orderline_id,
-                batch_id=inserted_batch[0]
-            )
-
-    def get(self, reference) -> model.Batch:
-        # self.session.execute('SELECT ??
+    def _get_raw_batch(self, reference):
         batches_recovered = self.session.execute(
             """
             SELECT * FROM batches
@@ -125,6 +127,9 @@ class SqlRepository(AbstractRepository):
         first_element = batches_recovered.first()
         batch = model.Batch(*first_element[1:])
 
+        return batch, first_element[0]
+
+    def _allocate_own_order_lines_to_batch(self, batch_id, batch):
         order_lines = self.session.execute(
             """
             SELECT order_lines.orderid,
@@ -135,7 +140,7 @@ class SqlRepository(AbstractRepository):
             AND order_lines.id = allocations.orderline_id
             """,
             {
-                'batch_id': first_element[0]
+                'batch_id': batch_id
             }
         )
         for order_line in order_lines:
