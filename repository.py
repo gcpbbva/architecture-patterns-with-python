@@ -16,18 +16,26 @@ class SqlRepository(AbstractRepository):
     def __init__(self, session):
         self.session = session
 
-    def insert_order_line(self, sku, qty, orderid):
-        self.session.execute(
-            """
-            INSERT INTO 'order_lines' (sku, qty, orderid)
-            VALUES (:sku, :qty, :orderid)
-            """,
-            {
-                'sku': sku,
-                'qty': qty,
-                'orderid': orderid
-            }
+    def get_order_line(self, orderid, sku):
+        result = self.session.execute(
+            "SELECT id FROM order_lines WHERE orderid=:orderid AND sku=:sku",
+            dict(orderid=orderid, sku=sku),
         )
+        return result.first()
+
+    def insert_order_line(self, sku, qty, orderid):
+        if not self.get_order_line(orderid, sku):
+            self.session.execute(
+                """
+                INSERT INTO 'order_lines' (sku, qty, orderid)
+                VALUES (:sku, :qty, :orderid)
+                """,
+                {
+                    'sku': sku,
+                    'qty': qty,
+                    'orderid': orderid
+                }
+            )
         [[orderline_id]] = self.session.execute(
             "SELECT id FROM order_lines WHERE orderid=:orderid AND sku=:sku",
             dict(orderid=orderid, sku=sku),
@@ -46,15 +54,21 @@ class SqlRepository(AbstractRepository):
             }
         )
 
-    def get_batch(self, reference):
-        [[batch_id]] = self.session.execute(
-            'SELECT id FROM batches WHERE reference=:reference',
-            dict(reference=reference),
+    def get_batch(self, batch_id):
+        batches = self.session.execute(
+            """
+            SELECT id FROM batches 
+            WHERE reference=:batch_id
+            """,
+            {
+                'batch_id': batch_id
+            }
         )
-        return batch_id
+        return batches.first()
 
     def insert_batch(self, batch):
-        if self.get_batch(batch.reference):
+        recovered_batch = self.get_batch(batch.reference)
+        if not recovered_batch:
             self.session.execute(
                 """
                 INSERT INTO 'batches' (reference, sku, _purchased_quantity, eta)
@@ -67,15 +81,25 @@ class SqlRepository(AbstractRepository):
                     'eta': batch.eta
                 }
             )
-            [[batch_id]] = self.session.execute(
-                'SELECT id FROM batches WHERE reference=:reference',
-                dict(reference=batch.reference),
+        else:
+            self.session.execute(
+                """
+                REPLACE INTO 'batches' (id, reference, sku, _purchased_quantity, eta)
+                VALUES (:batch_id, :batch_reference, :sku, :qty, :eta)
+                """,
+                {
+                    'batch_id': recovered_batch[0],
+                    'batch_reference': batch.reference,
+                    'sku': batch.sku,
+                    'qty': batch._purchased_quantity,
+                    'eta': batch.eta
+                }
             )
-            return batch_id
+        return self.get_batch(batch.reference)
 
     def add(self, batch):
         # self.session.execute('INSERT INTO ??
-        batch_id = self.insert_batch(batch)
+        inserted_batch = self.insert_batch(batch)
         for allocated_order_line in batch._allocations:
             orderline_id = self.insert_order_line(
                 sku=allocated_order_line.sku,
@@ -84,7 +108,7 @@ class SqlRepository(AbstractRepository):
             )
             self.insert_allocation(
                 orderline_id=orderline_id,
-                batch_id=batch_id
+                batch_id=inserted_batch[0]
             )
 
     def get(self, reference) -> model.Batch:
