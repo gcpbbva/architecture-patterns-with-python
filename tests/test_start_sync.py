@@ -1,7 +1,8 @@
+import shutil
 import tempfile
 from pathlib import Path
-import shutil
-from start_sync import sync
+
+from app.start_sync import sync, determine_actions
 
 
 class TestE2E:
@@ -45,3 +46,37 @@ class TestE2E:
         finally:
             shutil.rmtree(source)
             shutil.rmtree(dest)
+
+
+def test_when_a_file_exists_in_the_source_but_not_the_destination():
+    source_hashes = {"hash1": "fn1"}
+    dest_hashes = {}
+
+    actions = determine_actions(source_hashes, dest_hashes, Path("/src"), Path("/dst"))
+
+    assert list(actions) == [("COPY", Path("/src/fn1"), Path("/dst/fn1"))]
+
+
+def test_when_several_use_cases_should_return_all_the_actions():
+    source_hashes = {"hash1": "fn1", "hash2": "fn2", "hash3": "fn3"}
+    dest_hashes = {"hash0": "fn0", "hash3": "fn44"}
+
+    actions = determine_actions(source_hashes, dest_hashes, Path("/src"), Path("/dst"))
+
+    assert list(actions) == [
+        ("COPY", Path("/src/fn1"), Path("/dst/fn1")),
+        ("COPY", Path("/src/fn2"), Path("/dst/fn2")),
+        ("MOVE", Path("/dst/fn44"), Path("/dst/fn3")),
+        ("DELETE", Path("/dst/fn0"))
+    ]
+
+
+def test_when_a_file_has_been_renamed_in_the_source():
+    source_hashes = {"hash1": "fn1"}
+    dest_hashes = {"hash1": "fn2"}
+
+    actions = determine_actions(source_hashes, dest_hashes, Path("/src"), Path("/dst"))
+
+    assert list(actions) == [("MOVE", Path("/dst/fn2"), Path("/dst/fn1"))]
+
+

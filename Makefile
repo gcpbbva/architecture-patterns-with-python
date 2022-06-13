@@ -1,5 +1,5 @@
 test:
-	pytest --tb=short -vv
+	pytest --tb=short -vv --capture=tee-sys
 
 watch-tests:
 	ls *.py | entr pytest --tb=short
