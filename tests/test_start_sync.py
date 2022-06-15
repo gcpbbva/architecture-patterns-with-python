@@ -54,7 +54,7 @@ def test_when_a_file_exists_in_the_source_but_not_the_destination():
 
     actions = determine_actions(source_hashes, dest_hashes, Path("/src"), Path("/dst"))
 
-    assert list(actions) == [("COPY", Path("/src/fn1"), Path("/dst/fn1"))]
+    assert list(actions) == [("COPY", "/src/fn1", "/dst/fn1")]
 
 
 def test_when_several_use_cases_should_return_all_the_actions():
@@ -64,10 +64,10 @@ def test_when_several_use_cases_should_return_all_the_actions():
     actions = determine_actions(source_hashes, dest_hashes, Path("/src"), Path("/dst"))
 
     assert list(actions) == [
-        ("COPY", Path("/src/fn1"), Path("/dst/fn1")),
-        ("COPY", Path("/src/fn2"), Path("/dst/fn2")),
-        ("MOVE", Path("/dst/fn44"), Path("/dst/fn3")),
-        ("DELETE", Path("/dst/fn0"))
+        ("COPY", "/src/fn1", "/dst/fn1"),
+        ("COPY", "/src/fn2", "/dst/fn2"),
+        ("MOVE", "/dst/fn44", "/dst/fn3"),
+        ("DELETE", "/dst/fn0")
     ]
 
 
@@ -77,6 +77,6 @@ def test_when_a_file_has_been_renamed_in_the_source():
 
     actions = determine_actions(source_hashes, dest_hashes, Path("/src"), Path("/dst"))
 
-    assert list(actions) == [("MOVE", Path("/dst/fn2"), Path("/dst/fn1"))]
+    assert list(actions) == [("MOVE", "/dst/fn2", "/dst/fn1")]
 
 

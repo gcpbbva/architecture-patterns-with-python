@@ -8,25 +8,19 @@ MOVE_ACTION = 'MOVE'
 DELETE_ACTION = 'DELETE'
 
 
-def sync_explicit(reader, filesystem, source_root, dest_root):
-
+def sync_explicit_dependencies(reader, filesystem, source_root, dest_root):
     source_hashes = reader(source_root)
     dest_hashes = reader(dest_root)
 
-    for sha, filename in source_hashes.items():
-        if sha not in dest_hashes:
-            sourcepath = f"{source_root}/{filename}"
-            destpath = f"{dest_root}/{filename}"
-            filesystem.copy(sourcepath, destpath)
+    actions = determine_actions(source_hashes, dest_hashes, source_root, dest_root)
 
-        elif dest_hashes[sha] != filename:
-            olddestpath = f"{dest_root}/{dest_hashes[sha]}"
-            newdestpath = f"{dest_root}/{filename}"
-            filesystem.move(olddestpath, newdestpath)
-
-    for sha, filename in dest_hashes.items():
-        if sha not in source_hashes:
-            filesystem.delete(f"{dest_root}/{filename}")
+    for action, *paths in actions:
+        if action == COPY_ACTION:
+            filesystem.copy(*paths)
+        if action == MOVE_ACTION:
+            filesystem.move(*paths)
+        if action == DELETE_ACTION:
+            filesystem.delete(paths[0])
 
 
 def sync(source, dest):
@@ -58,18 +52,18 @@ def hash_file(path):
 def determine_actions(src_hashes, dst_hashes, src_folder, dst_folder):
     for sha, filename in src_hashes.items():
         if sha not in dst_hashes:
-            sourcepath = Path(src_folder) / filename
-            destpath = Path(dst_folder) / filename
-            yield 'COPY', sourcepath, destpath
+            sourcepath = f"{src_folder}/{filename}"
+            destpath = f"{dst_folder}/{filename}"
+            yield COPY_ACTION, sourcepath, destpath
 
         elif dst_hashes[sha] != filename:
-            olddestpath = Path(dst_folder) / dst_hashes[sha]
-            newdestpath = Path(dst_folder) / filename
-            yield 'MOVE', olddestpath, newdestpath
+            olddestpath = f"{dst_folder}/{dst_hashes[sha]}"
+            newdestpath = f"{dst_folder}/{filename}"
+            yield MOVE_ACTION, olddestpath, newdestpath
 
     for sha, filename in dst_hashes.items():
         if sha not in src_hashes:
-            yield 'DELETE', dst_folder / filename
+            yield DELETE_ACTION, f"{dst_folder}/{filename}"
 
 
 def read_paths_and_hashes(root):
