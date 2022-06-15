@@ -3,7 +3,8 @@ import tempfile
 from pathlib import Path
 
 from app.local_filesystem import LocalFileSystem
-from app.start_sync import sync_explicit_dependencies, read_paths_and_hashes
+from app.local_reader import read_paths_and_hashes
+from app.start_sync import sync_explicit_dependencies
 
 
 class FakeFileSystem(list):

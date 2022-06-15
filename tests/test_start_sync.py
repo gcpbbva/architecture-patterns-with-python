@@ -2,7 +2,13 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from app.start_sync import sync, determine_actions
+from app.local_filesystem import LocalFileSystem
+from app.local_reader import read_paths_and_hashes
+from app.start_sync import determine_actions, sync_explicit_dependencies
+
+
+def sync(source_root, dest_root):
+    return sync_explicit_dependencies(read_paths_and_hashes, LocalFileSystem(), source_root, dest_root)
 
 
 class TestE2E:
@@ -78,5 +84,3 @@ def test_when_a_file_has_been_renamed_in_the_source():
     actions = determine_actions(source_hashes, dest_hashes, Path("/src"), Path("/dst"))
 
     assert list(actions) == [("MOVE", "/dst/fn2", "/dst/fn1")]
-
-
