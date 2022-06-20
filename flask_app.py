@@ -23,5 +23,19 @@ def allocate_endpoint():
         request.json["qty"],
     )
 
-    batchref = model.allocate(line, batches)
+    if not is_valid_sku(line.sku, batches):
+        return jsonify({'message': f'Invalid sku {line.sku}'}), 400
+
+    try:
+        batchref = model.allocate(line, batches)
+    except model.OutOfStock as e:
+        return jsonify({'message': str(e)}), 400
+
+    session.commit()
     return jsonify({'batchref': batchref}), 201
+
+
+def is_valid_sku(sku, batches):
+    return sku in {b.sku for b in batches}
+
+
