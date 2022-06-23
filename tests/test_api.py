@@ -3,7 +3,7 @@ import uuid
 import pytest
 import requests
 
-import config
+from app import config
 
 
 def random_suffix():
