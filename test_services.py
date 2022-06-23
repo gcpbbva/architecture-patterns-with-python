@@ -61,8 +61,7 @@ def test_deallocate_decrements_available_quantity():
     services.allocate(line, repo, session)
     batch = repo.get(reference="b1")
     assert batch.available_quantity == 90
-    # services.deallocate(...
-    ...
+    services.deallocate(batch.reference, line, repo)
     assert batch.available_quantity == 100
 
 
