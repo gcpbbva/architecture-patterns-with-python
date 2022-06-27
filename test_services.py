@@ -78,7 +78,6 @@ def test_deallocate_increments_available_quantity():
 
 
 def test_deallocate_decrements_correct_quantity():
-    # TODO - check that we decrement the right sku
     repo, session = FakeRepository([]), FakeSession()
     services.add_batch("b1", "BLUE-PLINTH", 100, None, repo, session)
     line = model.OrderLine("o1", "BLUE-PLINTH", 10)
@@ -92,13 +91,11 @@ def test_deallocate_decrements_correct_quantity():
 
 
 def test_trying_to_deallocate_unallocated_batch():
-    # TODO: should this error or pass silently? up to you.
     repo, session = FakeRepository([]), FakeSession()
     services.add_batch("b1", "BLUE-PLINTH", 100, None, repo, session)
     line = model.OrderLine("o1", "BLUE-PLINTH", 10)
-    batch = repo.get(reference="b1")
 
-    services.deallocate(batch.reference, line, repo)
+    services.deallocate("b1", line, repo)
 
     batch = repo.get(reference="b1")
     assert batch.available_quantity == 100
