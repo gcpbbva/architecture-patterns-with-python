@@ -2,7 +2,7 @@ import uuid
 import pytest
 import requests
 
-import config
+from app import config
 
 
 def random_suffix():
@@ -38,6 +38,9 @@ def test_happy_path_returns_201_and_allocated_batch(add_stock):
     url = config.get_api_url()
 
     r = requests.post(f"{url}/allocate", json=data)
+
+    print(r.status_code)
+    print(r.content)
 
     assert r.status_code == 201
     assert r.json()["batchref"] == earlybatch

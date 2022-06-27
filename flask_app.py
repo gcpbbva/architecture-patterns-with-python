@@ -2,11 +2,11 @@ from flask import Flask, request
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-import config
-import model
-import orm
-import repository
-import services
+from app import config
+from app import model
+from app import orm
+from app import repository
+from app import services
 
 
 orm.start_mappers()

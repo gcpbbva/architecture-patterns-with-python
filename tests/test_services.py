@@ -1,7 +1,6 @@
 import pytest
 
-import model
-import services
+from app import services, model
 from tests import FakeRepository, FakeSession
 
 

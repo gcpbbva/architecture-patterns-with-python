@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import model
-from model import OrderLine
-from repository import AbstractRepository
+from app import model
+from app.model import OrderLine
+from app.repository import AbstractRepository
 
 
 class InvalidSku(Exception):

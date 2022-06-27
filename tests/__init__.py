@@ -1,4 +1,4 @@
-import repository
+from app import repository
 
 
 class FakeRepository(repository.AbstractRepository):

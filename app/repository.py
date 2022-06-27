@@ -1,5 +1,5 @@
 import abc
-import model
+from app import model
 
 
 class AbstractRepository(abc.ABC):
