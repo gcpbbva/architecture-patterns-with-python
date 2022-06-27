@@ -21,9 +21,11 @@ def allocate(line: OrderLine, repo: AbstractRepository, session) -> str:
     session.commit()
     return batchref
 
+
 def add_batch(batch_reference, sku, qty, eta, repo, session):
     new_batch = model.Batch(batch_reference, sku, qty, eta)
     repo.add(new_batch)
+
 
 def deallocate(batch_reference, line, repo):
     batch = repo.get(reference=batch_reference)
