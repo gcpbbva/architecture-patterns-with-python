@@ -22,7 +22,7 @@ def allocate(line: OrderLine, repo: AbstractRepository, session) -> str:
     return batchref
 
 
-def add_batch(batch_reference, sku, qty, eta, repo, session):
+def add_batch(batch_reference, sku, qty, eta, repo):
     new_batch = model.Batch(batch_reference, sku, qty, eta)
     repo.add(new_batch)
 

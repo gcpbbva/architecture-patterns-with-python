@@ -1,29 +1,8 @@
 import pytest
 
 import model
-import repository
 import services
-
-
-class FakeRepository(repository.AbstractRepository):
-    def __init__(self, batches):
-        self._batches = set(batches)
-
-    def add(self, batch):
-        self._batches.add(batch)
-
-    def get(self, reference):
-        return next(b for b in self._batches if b.reference == reference)
-
-    def list(self):
-        return list(self._batches)
-
-
-class FakeSession:
-    committed = False
-
-    def commit(self):
-        self.committed = True
+from tests import FakeRepository, FakeSession
 
 
 def test_returns_allocation():
@@ -56,7 +35,7 @@ def test_commits():
 
 def test_allocate_decrements_available_quantity():
     repo, session = FakeRepository([]), FakeSession()
-    services.add_batch("b1", "BLUE-PLINTH", 100, None, repo, session)
+    services.add_batch("b1", "BLUE-PLINTH", 100, None, repo)
     line = model.OrderLine("o1", "BLUE-PLINTH", 10)
 
     services.allocate(line, repo, session)
@@ -67,7 +46,7 @@ def test_allocate_decrements_available_quantity():
 
 def test_deallocate_increments_available_quantity():
     repo, session = FakeRepository([]), FakeSession()
-    services.add_batch("b1", "BLUE-PLINTH", 100, None, repo, session)
+    services.add_batch("b1", "BLUE-PLINTH", 100, None, repo)
     line = model.OrderLine("o1", "BLUE-PLINTH", 10)
     services.allocate(line, repo, session)
 
@@ -79,7 +58,7 @@ def test_deallocate_increments_available_quantity():
 
 def test_deallocate_decrements_correct_quantity():
     repo, session = FakeRepository([]), FakeSession()
-    services.add_batch("b1", "BLUE-PLINTH", 100, None, repo, session)
+    services.add_batch("b1", "BLUE-PLINTH", 100, None, repo)
     line = model.OrderLine("o1", "BLUE-PLINTH", 10)
     line_2 = model.OrderLine("o2", "WHITE-PLINTH", 10)
     services.allocate(line, repo, session)
@@ -92,7 +71,7 @@ def test_deallocate_decrements_correct_quantity():
 
 def test_trying_to_deallocate_unallocated_batch():
     repo, session = FakeRepository([]), FakeSession()
-    services.add_batch("b1", "BLUE-PLINTH", 100, None, repo, session)
+    services.add_batch("b1", "BLUE-PLINTH", 100, None, repo)
     line = model.OrderLine("o1", "BLUE-PLINTH", 10)
 
     services.deallocate("b1", line, repo)
