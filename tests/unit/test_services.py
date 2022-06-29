@@ -18,6 +18,12 @@ class FakeRepository(repository.AbstractRepository):
     def list(self):
         return list(self._batches)
 
+    @staticmethod
+    def for_batch(ref, sku, qty, eta=None):
+        return FakeRepository([
+            Batch(ref, sku, qty, eta),
+        ])
+
 
 class FakeSession:
     committed = False
@@ -66,3 +72,9 @@ def test_prefers_current_stock_batches_to_shipments():
 
     assert in_stock_batch.available_quantity == 90
     assert shipment_batch.available_quantity == 100
+
+
+def test_returns_allocation():
+    repo = FakeRepository.for_batch("batch1", "COMPLICATED-LAMP", 100, eta=None)
+    result = services.allocate("o1", "COMPLICATED-LAMP", 10, repo, FakeSession())
+    assert result == "batch1"
