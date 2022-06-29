@@ -1,6 +1,8 @@
 import pytest
 from adapters import repository
+from domain.model import Batch, OrderLine
 from service_layer import services
+from tests.unit.test_allocate import tomorrow
 
 
 class FakeRepository(repository.AbstractRepository):
@@ -52,3 +54,15 @@ def test_commits():
     services.add_batch("b1", "OMINOUS-MIRROR", 100, None, repo, session)
     services.allocate("o1", "OMINOUS-MIRROR", 10, repo, session)
     assert session.committed is True
+
+
+def test_prefers_current_stock_batches_to_shipments():
+    in_stock_batch = Batch("in-stock-batch", "RETRO-CLOCK", 100, eta=None)
+    shipment_batch = Batch("shipment-batch", "RETRO-CLOCK", 100, eta=tomorrow)
+    repo, session = FakeRepository([in_stock_batch, shipment_batch]), FakeSession()
+    line = OrderLine("oref", "RETRO-CLOCK", 10)
+
+    services.allocate(line.orderid, line.sku, line.qty, repo, session)
+
+    assert in_stock_batch.available_quantity == 90
+    assert shipment_batch.available_quantity == 100
