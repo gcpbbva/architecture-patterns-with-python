@@ -18,14 +18,20 @@ class FakeRepository(repository.AbstractRepository):
 
 
 class FakeUnitOfWork(unit_of_work.AbstractUnitOfWork):
-    ...
+    def __init__(self):
+        self.batches = FakeRepository([])
+        self.committed = False
+
+    def commit(self):
+        self.committed = True
+
+    def rollback(self):
+        print('Rollback fake')
 
 
 def test_add_batch():
     uow = FakeUnitOfWork()
-    # fake_uow_starter = FakeUoWContextManager(uow) ?
-    # fake_uow_starter = contextlib.nullcontext(uow) ?
-    # services.add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, fake_uow_starter)
+    services.add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, uow)
     assert uow.batches.get("b1") is not None
     assert uow.committed
 

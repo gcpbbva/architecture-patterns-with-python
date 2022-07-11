@@ -2,8 +2,7 @@ from __future__ import annotations
 from typing import Optional
 from datetime import date
 
-from allocation.domain import model
-from allocation.domain.model import OrderLine
+from allocation.domain.model import OrderLine, allocate, Batch
 from allocation.service_layer import unit_of_work
 
 
@@ -25,7 +24,7 @@ def add_batch(
 ):
     # and this could be with start_uow() as uow:
     with uow:
-        uow.batches.add(model.Batch(ref, sku, qty, eta))
+        uow.batches.add(Batch(ref, sku, qty, eta))
         uow.commit()
 
 
@@ -40,6 +39,6 @@ def allocate(
         batches = uow.batches.list()
         if not is_valid_sku(line.sku, batches):
             raise InvalidSku(f"Invalid sku {line.sku}")
-        batchref = model.allocate(line, batches)
+        batchref = allocate(line, batches)
         uow.commit()
     return batchref
