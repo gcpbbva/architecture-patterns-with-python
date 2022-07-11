@@ -34,6 +34,7 @@ def test_uow_can_retrieve_a_batch_and_allocate_to_it(session_factory):
         batch = uow.batches.get(reference='batch1')
         line = model.OrderLine('o1', 'HIPSTER-WORKBENCH', 10)
         batch.allocate(line)
+        uow.commit()
 
     batchref = get_allocated_batch_ref(session, "o1", "HIPSTER-WORKBENCH")
     assert batchref == "batch1"
@@ -44,7 +45,6 @@ def test_rolls_back_uncommitted_work_when_rollback(session_factory):
     uow = unit_of_work.SqlAlchemyUnitOfWork(session_factory)
     with uow:
         insert_batch(uow.session, "batch1", "MEDIUM-PLINTH", 100, None)
-        uow.rollback()
 
     new_session = session_factory()
     rows = list(new_session.execute('SELECT * FROM "batches"'))
@@ -55,6 +55,7 @@ def test_commit_within_uow_works_fine(session_factory):
     uow = unit_of_work.SqlAlchemyUnitOfWork(session_factory)
     with uow:
         insert_batch(uow.session, "batch1", "MEDIUM-PLINTH", 100, None)
+        uow.commit()
 
     new_session = session_factory()
     rows = list(new_session.execute('SELECT * FROM "batches"'))
@@ -74,6 +75,7 @@ def test_rolls_back_on_error(session_factory):
         with uow:
             insert_batch(uow.session, "batch1", "LARGE-FORK", 100, None)
             _raise_exception(1)
+            uow.commit()
 
     new_session = session_factory()
     rows = list(new_session.execute('SELECT * FROM "batches"'))
@@ -92,6 +94,7 @@ def test_no_exception_commit_ok(session_factory):
     with uow:
         insert_batch(uow.session, "batch1", "LARGE-FORK", 100, None)
         _raise_exception(0)
+        uow.commit()
 
     new_session = session_factory()
     rows = list(new_session.execute('SELECT * FROM "batches"'))
