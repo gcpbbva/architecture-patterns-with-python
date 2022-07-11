@@ -25,7 +25,6 @@ def add_batch(
     # and this could be with start_uow() as uow:
     with uow:
         uow.batches.add(Batch(ref, sku, qty, eta))
-        uow.commit()
 
 
 def allocate(
@@ -40,5 +39,4 @@ def allocate(
         if not is_valid_sku(line.sku, batches):
             raise InvalidSku(f"Invalid sku {line.sku}")
         batchref = domain_allocate(line, batches)
-        uow.commit()
     return batchref
