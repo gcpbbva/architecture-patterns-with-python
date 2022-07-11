@@ -1,3 +1,5 @@
+import pytest
+
 from allocation.domain import model
 from allocation.service_layer import unit_of_work
 
@@ -38,7 +40,6 @@ def test_uow_can_retrieve_a_batch_and_allocate_to_it(session_factory):
     assert batchref == "batch1"
 
 
-"""
 # uncomment and fix these when ready
 def test_rolls_back_uncommitted_work_by_default(session_factory):
     uow = unit_of_work.SqlAlchemyUnitOfWork(session_factory)
@@ -50,17 +51,51 @@ def test_rolls_back_uncommitted_work_by_default(session_factory):
     assert rows == []
 
 
+def test_commit_within_uow_works_fine(session_factory):
+    uow = unit_of_work.SqlAlchemyUnitOfWork(session_factory)
+    with uow:
+        insert_batch(uow.session, "batch1", "MEDIUM-PLINTH", 100, None)
+        uow.commit()
+
+    new_session = session_factory()
+    rows = list(new_session.execute('SELECT * FROM "batches"'))
+    assert rows == [(1, 'batch1', 'MEDIUM-PLINTH', 100, None)]
+
+
 def test_rolls_back_on_error(session_factory):
     class MyException(Exception):
         pass
+
+    def _raise_exception(number):
+        if number == 1:
+            raise MyException()
 
     uow = unit_of_work.SqlAlchemyUnitOfWork(session_factory)
     with pytest.raises(MyException):
         with uow:
             insert_batch(uow.session, "batch1", "LARGE-FORK", 100, None)
-            raise MyException()
+            _raise_exception(1)
+            uow.commit()
 
     new_session = session_factory()
     rows = list(new_session.execute('SELECT * FROM "batches"'))
     assert rows == []
-"""
+
+
+def test_no_exception_commit_ok(session_factory):
+    class MyException(Exception):
+        pass
+
+    def _raise_exception(number):
+        if number == 1:
+            raise MyException()
+
+    uow = unit_of_work.SqlAlchemyUnitOfWork(session_factory)
+    with uow:
+        insert_batch(uow.session, "batch1", "LARGE-FORK", 100, None)
+        _raise_exception(0)
+        uow.commit()
+
+    new_session = session_factory()
+    rows = list(new_session.execute('SELECT * FROM "batches"'))
+    assert rows == [(1, 'batch1', 'LARGE-FORK', 100, None)]
