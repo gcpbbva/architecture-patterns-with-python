@@ -1,6 +1,7 @@
 from __future__ import annotations
-from typing import Optional
+
 from datetime import date
+from typing import Optional
 
 from allocation.domain.model import OrderLine, allocate as domain_allocate, Batch
 from allocation.service_layer import unit_of_work
@@ -15,12 +16,12 @@ def is_valid_sku(sku, batches):
 
 
 def add_batch(
-    ref: str,
-    sku: str,
-    qty: int,
-    eta: Optional[date],
-    uow: unit_of_work.AbstractUnitOfWork
-    # this argument could be start_uow: AbstractUnitOfWorkStarter instead?
+        ref: str,
+        sku: str,
+        qty: int,
+        eta: Optional[date],
+        uow: unit_of_work.AbstractUnitOfWork
+        # this argument could be start_uow: AbstractUnitOfWorkStarter instead?
 ):
     # and this could be with start_uow() as uow:
     with uow:
@@ -29,10 +30,10 @@ def add_batch(
 
 
 def allocate(
-    orderid: str,
-    sku: str,
-    qty: int,
-    uow: unit_of_work.AbstractUnitOfWork,
+        orderid: str,
+        sku: str,
+        qty: int,
+        uow: unit_of_work.AbstractUnitOfWork,
 ) -> str:
     line = OrderLine(orderid, sku, qty)
     with uow:
