@@ -4,6 +4,21 @@ from datetime import date
 from typing import Optional, List, Set
 
 
+# Aggregate
+class Product:
+    def __init__(self, sku: str, batches: List[Batch]):
+        self.sku = sku
+        self.batches = batches
+
+    def allocate(self, line: OrderLine):
+        try:
+            batch = next(_batch for _batch in sorted(self.batches) if _batch.can_allocate(line))
+            batch.allocate(line)
+            return batch.reference
+        except StopIteration:
+            raise OutOfStock(f'Out of stock for sku {line.sku}')
+
+
 class OutOfStock(Exception):
     pass
 
@@ -68,3 +83,6 @@ class Batch:
 
     def can_allocate(self, line: OrderLine) -> bool:
         return self.sku == line.sku and self.available_quantity >= line.qty
+
+
+__all__ = 'Product',

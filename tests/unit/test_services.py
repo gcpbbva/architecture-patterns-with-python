@@ -1,25 +1,29 @@
 import pytest
+
 from allocation.adapters import repository
 from allocation.service_layer import services, unit_of_work
 
 
 class FakeRepository(repository.AbstractRepository):
-    def __init__(self, batches):
-        self._batches = set(batches)
+    def __init__(self, products):
+        self._products = set(products)
 
-    def add(self, batch):
-        self._batches.add(batch)
+    def add(self, product):
+        self._products.add(product)
 
-    def get(self, reference):
-        return next(b for b in self._batches if b.reference == reference)
+    def get(self, sku):
+        products = [p for p in self._products if p.sku == sku]
+        if products:
+            return products[0]
+        return None
 
     def list(self):
-        return list(self._batches)
+        return list(self._products)
 
 
 class FakeUnitOfWork(unit_of_work.AbstractUnitOfWork):
     def __init__(self):
-        self.batches = FakeRepository([])
+        self.products = FakeRepository([])
         self.committed = False
 
     def commit(self):
@@ -32,7 +36,7 @@ class FakeUnitOfWork(unit_of_work.AbstractUnitOfWork):
 def test_add_batch():
     uow = FakeUnitOfWork()
     services.add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, uow)
-    assert uow.batches.get("b1") is not None
+    assert uow.products.get("CRUNCHY-ARMCHAIR") is not None
     assert uow.committed
 
 
